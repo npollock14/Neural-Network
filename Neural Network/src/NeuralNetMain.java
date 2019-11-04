@@ -94,17 +94,16 @@ class NeuralNetwork {
 		
 		//start back propagating
 		Matrix[] errors = new Matrix[nodes.length-1];
-		System.out.println(errors.length);
 		
 		
-		errors[errors.length-1] = targets.minus(layers[layers.length - 1]); //targets - outputs = error
+		errors[0] = targets.minus(layers[layers.length - 1]); //targets - outputs = error
 		for(int i = 0; i<nodes.length-1; i++) { //back propagates through the layers
 			if(i != 0) {
 				//new error = prev weights transposed times prev errors
-				errors[errors.length - 1 - i] = weights[nodes.length - 1 - i].transpose().timesM(errors[errors.length - 2 - i]); 
+				errors[i] = weights[nodes.length - 1 - i].transpose().timesM(errors[i-1]); 
 			}
 			Matrix gradient = layers[nodes.length-1-i].mapDsigmoid();
-			gradient.times(errors[nodes.length-1-i]);
+			gradient.times(errors[i]); //added -1 ?
 			gradient.scalarMult(learningRate);
 			Matrix deltaWs = gradient.timesM(layers[nodes.length-2-i].transpose());
 			weights[weights.length - 1 - i] = weights[weights.length - 1 - i].plus(deltaWs);
