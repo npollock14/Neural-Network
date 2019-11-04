@@ -4,17 +4,23 @@ import java.util.Scanner;
 public class NeuralNetMain {
 	public static void main(String[] args) {
 
-		NeuralNetwork nn = new NeuralNetwork(1, 500, 1);
+		NeuralNetwork nn = new NeuralNetwork(2,2,1);
+		double[][] input7 = { { 0 }, { 0 } };
+		System.out.println((nn.feedFoward(new Matrix(input7)).data[0][0]));
 
-		// double[][] input1 = { { 0 }, { 1 } };
-		// double[][] input2 = { { 1 }, { 0 } };
-		// double[][] input3 = { { 0 }, { 0 } };
-		// double[][] input4 = { { 1 }, { 1 } };
-		//
-		// double[][] answer1 = { { 1 } };
-		// double[][] answer2 = { { 1 } };
-		// double[][] answer3 = { { 0 } };
-		// double[][] answer4 = { { 0 } };
+		double[][] input1 = { { 0 }, { 1 } };
+		double[][] input2 = { { 1 }, { 0 } };
+		double[][] input3 = { { 0 }, { 0 } };
+		double[][] input4 = { { 1 }, { 1 } };
+		
+		double[][] answer1 = { { 1 } };
+		double[][] answer2 = { { 1 } };
+		double[][] answer3 = { { 0 } };
+		double[][] answer4 = { { 0 } };
+		
+		//TrainingData[] t = {new TrainingData(new Matrix(input1), new Matrix(answer1))
+		nn.train(new Matrix(input1), new Matrix(answer1));
+		
 		ArrayList<TrainingData> train = new ArrayList<TrainingData>();
 		for (int i = 0; i < 1000; i++) {
 			double i1 = Math.random()*.5;
@@ -31,23 +37,7 @@ public class NeuralNetMain {
 		// double[][] answer3 = { { 1 }, { 1 } };
 		// double[][] answer4 = { { 0 }, { 0 } };
 		
-int intervals = 1000000;
-		for (int i = 0; i < intervals; i++) {
-			TrainingData training = train.get((int) (Math.random() * train.size()));
-			nn.train(training.input, training.answer);
-			if(i % 1000 == 0) {
-				System.out.println((double)i/intervals);
-			}
-		}
-		System.out.println();
-System.out.println("DONE");
-		Scanner scan = new Scanner(System.in);
-		while (true) {
-			double i1 = scan.nextDouble();
-			double i2 = scan.nextDouble();
-			double[][] input7 = { { i1 }, { i2 } };
-			System.out.println((nn.feedFoward(new Matrix(input7)).data[0][0]));
-		}
+
 
 	}
 
@@ -72,80 +62,55 @@ class TrainingData {
 }
 
 class NeuralNetwork {
-	int inputNodes, hiddenNodes, outputNodes;
-	Matrix ihWs, hoWs, hBs, oBs;
+	int[] nodes;
+	Matrix[] weights;
+	Matrix[] biases;
+	Matrix[] layers;
 	double learningRate = .01;
 
-	public NeuralNetwork(int is, int hs, int os) {
-		inputNodes = is;
-		hiddenNodes = hs;
-		outputNodes = os;
-		ihWs = Matrix.random(hiddenNodes, inputNodes);
-		hoWs = Matrix.random(outputNodes, hiddenNodes);
-
-		hBs = Matrix.random(hiddenNodes, 1);
-		oBs = Matrix.random(outputNodes, 1);
+	public NeuralNetwork(int... nodes) {
+		this.nodes = nodes;
+		layers = new Matrix[nodes.length];
+		weights = new Matrix[nodes.length-1];
+		biases = new Matrix[nodes.length-1];
+		for(int i = 0; i<weights.length; i++) {
+			weights[i] = Matrix.random(nodes[i+1], nodes[i]);
+			biases[i] = Matrix.random(nodes[i+1], 1);
+		}
 
 	}
 
 	public Matrix feedFoward(Matrix input) {
-		Matrix hidden = ihWs.timesM(input).plus(hBs);
-		hidden = hidden.mapSigmoid();
-
-		Matrix output = hoWs.timesM(hidden).plus(oBs);
-		output = output.mapSigmoid();
-
-		return output;
+		layers[0] = input;
+		for(int i = 0; i<nodes.length-1; i++) {
+		layers[i + 1] = weights[i].timesM(layers[i]).plus(biases[i]).mapSigmoid();
+		}
+		return layers[layers.length-1];
 	}
 
 	public void train(Matrix inputs, Matrix targets) {
 
-		// Feed forward Section:
-		Matrix hidden = ihWs.timesM(inputs);
-		hidden = hidden.plus(hBs).mapSigmoid();
+		feedFoward(inputs); //now we have all the layers stuff
+		
+		//start back propagating
+		Matrix[] errors = new Matrix[nodes.length-1];
+		System.out.println(errors.length);
+		
+		
+		errors[errors.length-1] = targets.minus(layers[layers.length - 1]); //targets - outputs = error
+		for(int i = 0; i<nodes.length-1; i++) { //back propagates through the layers
+			if(i != 0) {
+				//new error = prev weights transposed times prev errors
+				errors[errors.length - 1 - i] = weights[nodes.length - 1 - i].transpose().timesM(errors[errors.length - 2 - i]); 
+			}
+			Matrix gradient = layers[nodes.length-1-i].mapDsigmoid();
+			gradient.times(errors[nodes.length-1-i]);
+			gradient.scalarMult(learningRate);
+			Matrix deltaWs = gradient.timesM(layers[nodes.length-2-i].transpose());
+			weights[weights.length - 1 - i] = weights[weights.length - 1 - i].plus(deltaWs);
+			biases[biases.length - 1 - i] = biases[biases.length - 1 - i].plus(gradient);
+		}
 
-		// hidden has bias added and is S-mapped
-
-		Matrix outputs = hoWs.timesM(hidden);
-		outputs = outputs.plus(oBs).mapSigmoid();
-
-		Matrix outputErrors = targets.minus(outputs);
-		// outputErrors.show();
-
-		Matrix gradients = outputs.mapDsigmoid();
-
-		gradients.times(outputErrors); // Error here
-		gradients.scalarMult(learningRate);
-
-		// Matrix hiddenT = hidden.transpose();
-		Matrix hoDeltaW = gradients.timesM(hidden.transpose());
-
-		// adjust output weights and bias's
-		this.hoWs = hoWs.plus(hoDeltaW);
-		this.oBs = oBs.plus(gradients);
-
-		// hidden layer error calculation
-		// Matrix hoWsT = hoWs.transpose();
-		Matrix hiddenErrors = hoWs.transpose().timesM(outputErrors);
-
-		// calc hidden gradient
-		Matrix hiddenGradient = hidden; // transposed this as an edit...
-		hiddenGradient.mapDsigmoid();
-
-		hiddenGradient.times(hiddenErrors);
-		// TODO Problem : hiddenGradient dimensions not matching hE dims
-		hiddenGradient.scalarMult(learningRate);
-
-		// calc hidden deltas
-		Matrix inputsT = inputs.transpose();
-		Matrix ihDeltaW = hiddenGradient.timesM(inputsT);
-
-		this.ihWs = ihWs.plus(ihDeltaW);
-		this.hBs = hBs.plus(hiddenGradient);
-
-		// outputs.show();
-		// targets.show();
-		// outputErrors.show();
 
 	}
 }
