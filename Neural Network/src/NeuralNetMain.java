@@ -4,10 +4,8 @@ import java.util.Scanner;
 public class NeuralNetMain {
 	public static void main(String[] args) {
 
-		NeuralNetwork nn = new NeuralNetwork(2, 4, 1);
-		double[][] input7 = { { 0 }, { 0 } };
+		NeuralNetwork nn = new NeuralNetwork(2, 4, 4, 1);
 		
-
 		double[][] input1 = { { 0 }, { 1 } };
 		double[][] input2 = { { 1 }, { 0 } };
 		double[][] input3 = { { 0 }, { 0 } };
@@ -23,7 +21,7 @@ public class NeuralNetMain {
 				new TrainingData(new Matrix(input3), new Matrix(answer3)),
 				new TrainingData(new Matrix(input4), new Matrix(answer4)) };
 		
-		for(int i = 0; i<500000; i++) {
+		for(int i = 0; i<50000; i++) {
 			TrainingData tr = t[(int) (Math.random()*4)];
 			nn.train(tr.input, tr.answer);
 		}
@@ -76,7 +74,7 @@ class NeuralNetwork {
 	Matrix[] weights;
 	Matrix[] biases;
 	Matrix[] layers;
-	double learningRate = .01;
+	double learningRate = .1;
 
 	public NeuralNetwork(int... nodes) {
 		this.nodes = nodes;
@@ -220,7 +218,6 @@ class Matrix {
 
 	// return C = A * B
 	public void times(Matrix B) {
-
 		for (int i = 0; i < M; i++) {
 			for (int j = 0; j < N; j++) {
 				data[i][j] *= B.data[i][j];
