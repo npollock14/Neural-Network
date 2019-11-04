@@ -1,39 +1,62 @@
+import java.util.ArrayList;
+import java.util.Scanner;
 
 public class NeuralNetMain {
 	public static void main(String[] args) {
 
-		NeuralNetwork nn = new NeuralNetwork(2, 2, 1);
+		NeuralNetwork nn = new NeuralNetwork(1, 500, 1);
 
-		double[][] input1 = { { 0 }, { 1 } };
-		double[][] input2 = { { 1 }, { 0 } };
-		double[][] input3 = { { 0 }, { 0 } };
-		double[][] input4 = { { 1 }, { 1 } };
+		// double[][] input1 = { { 0 }, { 1 } };
+		// double[][] input2 = { { 1 }, { 0 } };
+		// double[][] input3 = { { 0 }, { 0 } };
+		// double[][] input4 = { { 1 }, { 1 } };
+		//
+		// double[][] answer1 = { { 1 } };
+		// double[][] answer2 = { { 1 } };
+		// double[][] answer3 = { { 0 } };
+		// double[][] answer4 = { { 0 } };
+		ArrayList<TrainingData> train = new ArrayList<TrainingData>();
+		for (int i = 0; i < 1000; i++) {
+			double i1 = Math.random()*.5;
+			double ans = i1*2;
 
-		double[][] answer1 = { { 1 } };
-		double[][] answer2 = { { 1 } };
-		double[][] answer3 = { { 0 } };
-		double[][] answer4 = { { 0 } };
+			double[][] input = { { i1 } };
+			double[][] answer = { { ans } };
+			train.add(new TrainingData(new Matrix(input), new Matrix(answer)));
+		}
 
 
 		// double[][] answer1 = { { 1 }, { 0 } };
 		// double[][] answer2 = { { 0 }, { 1 } };
 		// double[][] answer3 = { { 1 }, { 1 } };
 		// double[][] answer4 = { { 0 }, { 0 } };
-		TrainingData[] t = { new TrainingData(new Matrix(input1), new Matrix(answer1)),
-				new TrainingData(new Matrix(input2), new Matrix(answer2)),
-				new TrainingData(new Matrix(input3), new Matrix(answer3)),
-				new TrainingData(new Matrix(input4), new Matrix(answer4)) };
-
-		for (int i = 0; i < 0; i++) {
-			TrainingData training = t[(int) (Math.random() * 4)];
+		
+int intervals = 1000000;
+		for (int i = 0; i < intervals; i++) {
+			TrainingData training = train.get((int) (Math.random() * train.size()));
 			nn.train(training.input, training.answer);
+			if(i % 1000 == 0) {
+				System.out.println((double)i/intervals);
+			}
+		}
+		System.out.println();
+System.out.println("DONE");
+		Scanner scan = new Scanner(System.in);
+		while (true) {
+			double i1 = scan.nextDouble();
+			double i2 = scan.nextDouble();
+			double[][] input7 = { { i1 }, { i2 } };
+			System.out.println((nn.feedFoward(new Matrix(input7)).data[0][0]));
 		}
 
-		nn.feedFoward(new Matrix(input1)).show();
-		nn.feedFoward(new Matrix(input2)).show();
-		nn.feedFoward(new Matrix(input3)).show();
-		nn.feedFoward(new Matrix(input4)).show();
+	}
 
+	public static double sig(double x) {
+		return 1 / (1 + Math.exp(-x));
+	}
+
+	public static double iSig(double x) {
+		return -Math.log(1 / x - 1);
 	}
 }
 
@@ -51,7 +74,7 @@ class TrainingData {
 class NeuralNetwork {
 	int inputNodes, hiddenNodes, outputNodes;
 	Matrix ihWs, hoWs, hBs, oBs;
-	double learningRate = .1;
+	double learningRate = .01;
 
 	public NeuralNetwork(int is, int hs, int os) {
 		inputNodes = is;
@@ -87,7 +110,7 @@ class NeuralNetwork {
 		outputs = outputs.plus(oBs).mapSigmoid();
 
 		Matrix outputErrors = targets.minus(outputs);
-		//outputErrors.show();
+		// outputErrors.show();
 
 		Matrix gradients = outputs.mapDsigmoid();
 
