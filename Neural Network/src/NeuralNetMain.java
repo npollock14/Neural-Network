@@ -3,7 +3,7 @@ import java.util.Scanner;
 
 public class NeuralNetMain {
 	public static void main(String[] args) {
-		NeuralNetwork nn = new NeuralNetwork(2, 4, 8, 1);
+		NeuralNetwork nn = new NeuralNetwork(1, 4, 4, 1);
 
 		double[][] input1 = { { 0 }, { 1 } };
 		double[][] input2 = { { 1 }, { 0 } };
@@ -20,25 +20,36 @@ public class NeuralNetMain {
 				new TrainingData(new Matrix(input3), new Matrix(answer3)),
 				new TrainingData(new Matrix(input4), new Matrix(answer4)) };
 
-		for (int i = 0; i < 50000; i++) {
-			TrainingData tr = t[(int) (Math.random() * 4)];
-			nn.train(tr.input, tr.answer);
-		}
-		System.out.println("Trained!");
+//		for (int i = 0; i < 50000; i++) {
+//			TrainingData tr = t[(int) (Math.random() * 4)];
+//			nn.train(tr.input, tr.answer);
+//		}
+//		System.out.println("Trained!");
 
-		nn.feedFoward(new Matrix(input1)).show();
-		nn.feedFoward(new Matrix(input2)).show();
-		nn.feedFoward(new Matrix(input3)).show();
-		nn.feedFoward(new Matrix(input4)).show();
+//		nn.feedFoward(new Matrix(input1)).show();
+//		nn.feedFoward(new Matrix(input2)).show();
+//		nn.feedFoward(new Matrix(input3)).show();
+//		nn.feedFoward(new Matrix(input4)).show();
 
 		ArrayList<TrainingData> train = new ArrayList<TrainingData>();
 		for (int i = 0; i < 1000; i++) {
-			double i1 = Math.random() * .5;
-			double ans = i1 * 2;
+			double i1 = Math.random();
+			double ans = Math.sqrt(i1);
 
 			double[][] input = { { i1 } };
 			double[][] answer = { { ans } };
 			train.add(new TrainingData(new Matrix(input), new Matrix(answer)));
+		}
+		
+		for (int i = 0; i < 50000; i++) {
+			TrainingData tr = train.get((int) (Math.random() * train.size()-1));
+			nn.train(tr.input, tr.answer);
+		}
+		System.out.println("Trained!");
+		Scanner scan = new Scanner(System.in);
+		while(true) {
+			double[][] input = { { scan.nextDouble() } };
+			nn.feedFoward(new Matrix(input)).show();
 		}
 
 		// double[][] answer1 = { { 1 }, { 0 } };
@@ -109,7 +120,7 @@ class NeuralNetwork {
 				errors[i] = weights[nodes.length - 1 - i].transpose().timesM(errors[i - 1]);
 			}
 			Matrix gradient = layers[nodes.length - 1 - i].mapDsigmoid();
-			gradient.times(errors[i]); // added -1 ?
+			gradient.times(errors[i]);
 			gradient.scalarMult(learningRate);
 			Matrix deltaWs = gradient.timesM(layers[nodes.length - 2 - i].transpose());
 			weights[weights.length - 1 - i] = weights[weights.length - 1 - i].plus(deltaWs);
