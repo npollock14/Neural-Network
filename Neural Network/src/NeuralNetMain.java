@@ -3,9 +3,8 @@ import java.util.Scanner;
 
 public class NeuralNetMain {
 	public static void main(String[] args) {
+		NeuralNetwork nn = new NeuralNetwork(2, 4, 8, 1);
 
-		NeuralNetwork nn = new NeuralNetwork(2, 4, 4, 1);
-		
 		double[][] input1 = { { 0 }, { 1 } };
 		double[][] input2 = { { 1 }, { 0 } };
 		double[][] input3 = { { 0 }, { 0 } };
@@ -20,13 +19,13 @@ public class NeuralNetMain {
 				new TrainingData(new Matrix(input2), new Matrix(answer2)),
 				new TrainingData(new Matrix(input3), new Matrix(answer3)),
 				new TrainingData(new Matrix(input4), new Matrix(answer4)) };
-		
-		for(int i = 0; i<50000; i++) {
-			TrainingData tr = t[(int) (Math.random()*4)];
+
+		for (int i = 0; i < 50000; i++) {
+			TrainingData tr = t[(int) (Math.random() * 4)];
 			nn.train(tr.input, tr.answer);
 		}
 		System.out.println("Trained!");
-		
+
 		nn.feedFoward(new Matrix(input1)).show();
 		nn.feedFoward(new Matrix(input2)).show();
 		nn.feedFoward(new Matrix(input3)).show();
@@ -74,7 +73,7 @@ class NeuralNetwork {
 	Matrix[] weights;
 	Matrix[] biases;
 	Matrix[] layers;
-	double learningRate = .1;
+	double learningRate = .5;
 
 	public NeuralNetwork(int... nodes) {
 		this.nodes = nodes;
@@ -140,6 +139,11 @@ class Matrix {
 		for (int i = 0; i < M; i++)
 			for (int j = 0; j < N; j++)
 				this.data[i][j] = data[i][j];
+	}
+	static Matrix fromArray(double[][] data) {
+		Matrix m = new Matrix(data);
+		return m;
+		
 	}
 
 	// copy constructor
